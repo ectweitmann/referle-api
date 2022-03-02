@@ -1,4 +1,5 @@
 const express = require('express');
+const { sortByAvgTileScore, filterByBookmark, paginateResults } = require('./utils.js');
 const heuristics = require('./wordle_guess_heuristics.json');
 const cors = require('cors');
 const app = express();
@@ -9,39 +10,21 @@ app.set('port', process.env.PORT || 3010);
 app.locals.title = 'Referle Database';
 app.locals.heuristics = heuristics;
 
-app.get('/', (request, response) => {
-  response.send('Oh hey Wordle lovers');
-});
-
 app.get('/api/v1/heuristics/sorted/avg_tile_score', (request, response) => {
-  console.log('REQUEST BEGINS --------->', request.route.path, '<---------- REQUEST ENDS');
-  const heuristics = app.locals.heuristics;
-  let sortedHeuristics = [...heuristics];
-    sortedHeuristics = sortedHeuristics.sort((a, b) => parseFloat(b['avg_tile_score']) - parseFloat(a['avg_tile_score']))
-      .filter(word => {
-        let index = 0;
-        let result = true;
-        for( const letter of word.guess) {
-          if (word.guess.indexOf(letter) !== index) {
-            result = false;
-            break;
-          }
-          index++;
-        }
-        return result;
-      })
-  response.status(200).json(sortedHeuristics);
+  const sortedHeuristics = sortByAvgTileScore(app.locals.heuristics);
+  const results = paginateResults(sortedHeuristics, request, response);
+  response.status(200).json(results);
 });
 
 app.get('/api/v1/heuristics/bookmarked', (request, response) => {
-  const  heuristics = app.locals.heuristics;
-  const bookmarkedWords = heuristics.filter(word => word.isBookmarked);
-  response.staus(200).json(bookmarkedWords);
-})
+  const filteredHeuristics = filterByBookmark(app.locals.heuristics);
+  const results = paginateResults(filteredHeuristics, request, response);
+  response.status(200).json(results);
+});
 
 app.patch('/api/v1/heuristics/:id', (request, response) => {
   const heuristics = app.locals.heuristics;
-  const index = heuristics.findIndex(word => word.id = request.params.id)
+  const index = heuristics.findIndex(word => `${word.id}` === request.params.id)
   if (index === -1) {
     return response.sendStatus(404)
   }
