@@ -30,20 +30,23 @@ app.get('/api/v1/heuristics/sorted/avg_tile_score', (request, response) => {
         }
         return result;
       })
-  response.json(sortedHeuristics);
+  response.status(200).json(sortedHeuristics);
 });
 
 app.get('/api/v1/heuristics/bookmarked', (request, response) => {
   const  heuristics = app.locals.heuristics;
   const bookmarkedWords = heuristics.filter(word => word.isBookmarked);
-  response.json(bookmarkedWords);
+  response.staus(200).json(bookmarkedWords);
 })
 
 app.patch('/api/v1/heuristics/:id', (request, response) => {
   const heuristics = app.locals.heuristics;
   const index = heuristics.findIndex(word => word.id = request.params.id)
+  if (index === -1) {
+    return response.sendStatus(404)
+  }
   heuristics[index].isBookmarked = request.body.isBookmarked;
-  response.json(heuristics[index]);
+  response.status(200).json(heuristics[index]);
 })
 
 app.listen(app.get('port'), () => {
