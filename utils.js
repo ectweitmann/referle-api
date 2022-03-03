@@ -36,6 +36,10 @@ const paginateResults = (model, request, response) => {
     }
   }
 
+  results.current = {
+    page: page
+  }
+
   if (endIndex < model.length) {
     results.next = {
       page: page + 1,
